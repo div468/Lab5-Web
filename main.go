@@ -39,8 +39,7 @@ func handleClient(conn net.Conn, db *sql.DB) {
 	<th>Episodios totales</th>
 	</tr>`
 	html += table_data
-	html += "</table></body></html>"
-	
+	html += "</table><script>alert('Estas viendo muy buenas series :)')</script></body></html>"
 
 	body := html
 
