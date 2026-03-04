@@ -64,21 +64,34 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 	table_data := ""
 	for rows.Next() {
 		rows.Scan(&id, &name, &current_episode, &total_episodes)
-		line := fmt.Sprintf("<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td><progress id=%d value=%d max=%d </td><td><button onclick=\"addEpisode(%d)\">+1</button></td></tr>", id, name, current_episode, total_episodes, id, id, current_episode, total_episodes)
+		line := fmt.Sprintf(`<tr>
+		<td>%d</td>
+		<td>%s</td>
+		<td id='episode-%d'>%d</td>
+		<td>%d</td>
+		<td><progress id=%d value=%d max=%d></progress></td>
+		<td><button onclick="addEpisode(%d)">+1</button></td>
+		</tr>`,
+			id, name, id, current_episode, total_episodes, id, current_episode, total_episodes, id)
+
 		fmt.Println(id, name, current_episode, total_episodes)
 		table_data += line
-
 	}
 
 	html := `<html>
 	<head>
+	<meta charset="UTF-8">
+	<title>Tracker de series</title>
 	</head>
 	<body>
 	<script>
 	async function addEpisode(id){
 	const url = "/update?id=" + id;
 	const response = await fetch(url, {method: "POST"})
-	location.reload();
+	const newValue = await response.text()
+
+	const new_episode = document.getElementById("episode-" + id);
+	new_episode.textContent = newValue
 	}
 	</script>
 	
@@ -88,13 +101,12 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 	<th>ID de la serie</th>
 	<th>Nombre de la serie</th>
 	<th>Episodio en el que voy</th>
-	<th>Episodios totales<s/th>
+	<th>Episodios totales</th>
 	<th>Progreso de la serie</th>
 	<th>Agregar episodio visto</th>
 	</tr>`
 	html += table_data
-	html += "</table><script>alert('Estas viendo muy buenas series :)')</script>"
-	html += "<a href='./create'>Añadir nueva serie</a></body></html>"
+	html += "</table><a href='./create'>Añadir nueva serie</a></body></html>"
 
 	body := html
 
@@ -188,8 +200,13 @@ func handleUpdate(conn net.Conn, db *sql.DB, query url.Values) {
 		fmt.Print("Error en update", err)
 	}
 
-	response := "HTTP/1.1 200 OK \r\n" +
-		"Content-Type: text/plain\r\n\r\n" + "ok"
-
+	var newEpisode int
+	db.QueryRow("SELECT current_episode FROM series WHERE id = ?", id).Scan(&newEpisode)
+	body := fmt.Sprintf("%d", newEpisode)
+	response := fmt.Sprintf(
+		"HTTP/1.1 200 OK \r\n"+
+			"Content-Type: text/plain\r\n"+
+			"Content-Length: %d\r\n\r\n%s", len(body), body,
+	)
 	conn.Write([]byte(response))
 }
