@@ -1,17 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"database/sql"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
-	"database/sql"
-	"bufio"
 	"strings"
-	"io"
 
-	_ "modernc.org/sqlite"	
+	_ "modernc.org/sqlite"
 )
-
 
 func HandleConnection(conn net.Conn, db *sql.DB) {
 	defer conn.Close()
@@ -31,7 +30,7 @@ func HandleConnection(conn net.Conn, db *sql.DB) {
 	URL := parts[1]
 	u, _ := url.Parse(URL)
 	path := u.Path
-	query:=u.Query()
+	query := u.Query()
 
 	switch {
 	case method == "GET" && path == "/":
@@ -52,7 +51,7 @@ func HandleConnection(conn net.Conn, db *sql.DB) {
 
 func handleIndex(conn net.Conn, db *sql.DB) {
 	rows, err := db.Query("SELECT id, name, current_episode, total_episodes FROM series")
-	if err != nil{
+	if err != nil {
 		fmt.Println("Error en Queary:", err)
 		handleNotFound(conn)
 		return
@@ -63,20 +62,20 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 	var current_episode int
 	var total_episodes int
 	table_data := ""
-		for rows.Next(){
-			rows.Scan(&id, &name, &current_episode, &total_episodes)
-			line := fmt.Sprintf("<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td><button onclick=\"nextEpisode(%d)\">+1</button></td></tr>", id, name, current_episode, total_episodes, id)
-			fmt.Println(id, name, current_episode, total_episodes)
-			table_data += line
-			
-		}
+	for rows.Next() {
+		rows.Scan(&id, &name, &current_episode, &total_episodes)
+		line := fmt.Sprintf("<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td><progress id=%d value=%d max=%d </td><td><button onclick=\"addEpisode(%d)\">+1</button></td></tr>", id, name, current_episode, total_episodes, id, id, current_episode, total_episodes)
+		fmt.Println(id, name, current_episode, total_episodes)
+		table_data += line
+
+	}
 
 	html := `<html>
 	<head>
 	</head>
 	<body>
 	<script>
-	async function nextEpisode(id){
+	async function addEpisode(id){
 	const url = "/update?id=" + id;
 	const response = await fetch(url, {method: "POST"})
 	location.reload();
@@ -89,8 +88,9 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 	<th>ID de la serie</th>
 	<th>Nombre de la serie</th>
 	<th>Episodio en el que voy</th>
-	<th>Episodios totales</th>
-	<th>Añadir serie</th>
+	<th>Episodios totales<s/th>
+	<th>Progreso de la serie</th>
+	<th>Agregar episodio visto</th>
 	</tr>`
 	html += table_data
 	html += "</table><script>alert('Estas viendo muy buenas series :)')</script>"
@@ -111,7 +111,7 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 	fmt.Println(response)
 	conn.Write([]byte(response))
 
-	}
+}
 
 func handleAddForm(conn net.Conn) {
 
@@ -178,19 +178,18 @@ func handleNotFound(conn net.Conn) {
 	conn.Write([]byte(response))
 }
 
-func handleUpdate(conn net.Conn, db *sql.DB, query url.Values){
+func handleUpdate(conn net.Conn, db *sql.DB, query url.Values) {
 	id := query.Get("id")
 	_, err := db.Exec(`UPDATE series
 	SET current_episode = current_episode + 1
 	WHERE id = ? AND current_episode < total_episodes`, id)
 
-	if err !=nil {
+	if err != nil {
 		fmt.Print("Error en update", err)
 	}
 
-	response:= "HTTP/1.1 200 OK \r\n" +
-	"Content-Type: text/plain\r\n\r\n" + "ok"	
+	response := "HTTP/1.1 200 OK \r\n" +
+		"Content-Type: text/plain\r\n\r\n" + "ok"
 
 	conn.Write([]byte(response))
 }
-	
