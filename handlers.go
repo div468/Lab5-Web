@@ -215,14 +215,18 @@ func handleAddForm(conn net.Conn) {
 
 	html := `
 	<html>
+	<head>
+	<title>Añade una serie nueva a tu colección</title>
+	<meta charset="UTF-8">
+	</head>
 	<body>
-	<h2>Agregar nueva serie</h2>
+	<h2>Agregar nueva serie   </h2>
 	<form method="POST" action="/create_series">
 	Nombre: <input type="text" name="name"><br>
 	Episodio actual: <input type="number" name="current"><br>
 	Episodios totales: <input type="number" name="total"><br>
 	<input type="submit" value="Agregar">
-	<a href="/">Volver al track de series></a>
+	<a href="/">Volver al track de series</a>
 	</form>
 	</body>
 	</html>`
