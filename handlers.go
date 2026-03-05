@@ -34,7 +34,7 @@ func HandleConnection(conn net.Conn, db *sql.DB) {
 
 	switch {
 	case method == "GET" && path == "/":
-		handleIndex(conn, db)
+		handleIndex(conn, db, query)
 
 	case method == "GET" && path == "/create":
 		handleAddForm(conn)
@@ -49,13 +49,29 @@ func HandleConnection(conn net.Conn, db *sql.DB) {
 	}
 }
 
-func handleIndex(conn net.Conn, db *sql.DB) {
-	rows, err := db.Query("SELECT id, name, current_episode, total_episodes FROM series")
+func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
+	pageStr := query.Get("page")
+	page := 1
+	if pageStr != "" {
+		fmt.Sscan(pageStr, &page)
+	}
+
+	limit := 5
+	offset:= (page - 1) * limit
+	var totalSeries int
+	db.QueryRow("SELECT COUNT(*) from series").Scan(&totalSeries)
+	totalPages := (totalSeries + limit - 1)/limit
+
+	hasNext := page < totalPages
+	hasPrev := page > 1
+	rows, err := db.Query("SELECT id, name, current_episode, total_episodes FROM series LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		fmt.Println("Error en Queary:", err)
 		handleNotFound(conn)
 		return
 	}
+	prevPage := page - 1
+	nextPage := page + 1
 	defer rows.Close()
 	var id int
 	var name string
@@ -109,7 +125,24 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 	<th>Agregar episodio visto</th>
 	</tr>`
 	html += table_data
-	html += "</table><a href='./create'>Añadir nueva serie</a></body></html>"
+
+	nav := ""
+
+	if hasPrev {
+		nav += fmt.Sprintf(`<a href="/?page=%d">Anterior</a>`, prevPage)
+	}
+
+	nav += "&nbsp&nbsp"
+
+	if hasNext {
+		nav += fmt.Sprintf(`<a href="/?page=%d">Siguiente</a>`, nextPage)
+	}
+
+	html += fmt.Sprintf(`</table>	
+	<a href='./create'>Añadir nueva serie</a>
+	<br><br>
+	%s
+	</body></html>`, nav)
 
 	body := html
 
