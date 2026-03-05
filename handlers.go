@@ -42,8 +42,11 @@ func HandleConnection(conn net.Conn, db *sql.DB) {
 	case method == "POST" && path == "/create_series":
 		handleAddSeries(conn, reader, db)
 
-	case method == "POST" && path == "/update":
-		handleUpdate(conn, db, query)
+	case method == "POST" && path == "/add":
+		handleAdd(conn, db, query)
+
+	case method == "POST" && path == "/reduce":
+		handleReduce(conn, db, query)
 	default:
 		handleNotFound(conn)
 	}
@@ -86,9 +89,10 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 		<td id='episode-%d'>%d</td>
 		<td>%d</td>
 		<td><progress id="progress-%d" value=%d max=%d></progress></td>
-		<td><button onclick="addEpisode(%d)">+1</button></td>
+		<td><button onclick="addEpisode(%d)">+1</button> <button onclick="removeEpisode(%d)">-1</button> </td>
+
 		</tr>`,
-			id, name, id, current_episode, total_episodes, id, current_episode, total_episodes, id)
+			id, name, id, current_episode, total_episodes, id, current_episode, total_episodes, id, id)
 
 		fmt.Println(id, name, current_episode, total_episodes)
 		table_data += line
@@ -103,7 +107,7 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 	<script>
 
 async function addEpisode(id){
-	const url = "/update?id=" + id;
+	const url = "/add?id=" + id;
 	const response = await fetch(url, {method: "POST"})
 	const newValue = await response.text()
 
@@ -142,6 +146,17 @@ async function addEpisode(id){
 		rows.forEach(row => table.appendChild(row))
 	}
 
+	async function removeEpisode(id){
+		const url = "/reduce?id=" + id;
+		const response = await fetch(url, {method: "POST"})
+		const newValue = await response.text()
+
+		const new_episode = document.getElementById("episode-" + id);
+		new_episode.textContent = newValue
+
+		const new_progress = document.getElementById("progress-" + id);
+		new_progress.value = newValue
+	}
 	</script>
 	
 	<table border="3" cellpadding="10" align="center" cellspacing="5">
@@ -153,7 +168,7 @@ async function addEpisode(id){
 	<th onClick="sortTable(2)">Episodio en el que voy</th>
 	<th onClick="sortTable(3)">Episodios totales</th>
 	<th>Progreso de la serie</th>
-	<th>Agregar episodio visto</th>
+	<th>Añadir/eliminar episodio visto</th>
 	</tr>
 	</thead>
 	<tbody id="seriesTable">
@@ -261,11 +276,32 @@ func handleNotFound(conn net.Conn) {
 	conn.Write([]byte(response))
 }
 
-func handleUpdate(conn net.Conn, db *sql.DB, query url.Values) {
+func handleAdd(conn net.Conn, db *sql.DB, query url.Values) {
 	id := query.Get("id")
 	_, err := db.Exec(`UPDATE series
 	SET current_episode = current_episode + 1
 	WHERE id = ? AND current_episode < total_episodes`, id)
+
+	if err != nil {
+		fmt.Print("Error en update", err)
+	}
+
+	var newEpisode int
+	db.QueryRow("SELECT current_episode FROM series WHERE id = ?", id).Scan(&newEpisode)
+	body := fmt.Sprintf("%d", newEpisode)
+	response := fmt.Sprintf(
+		"HTTP/1.1 200 OK \r\n"+
+			"Content-Type: text/plain\r\n"+
+			"Content-Length: %d\r\n\r\n%s", len(body), body,
+	)
+	conn.Write([]byte(response))
+}
+
+func handleReduce(conn net.Conn, db *sql.DB, query url.Values) {
+	id := query.Get("id")
+	_, err := db.Exec(`UPDATE series
+	SET current_episode = current_episode - 1
+	WHERE id = ? AND current_episode > 0`, id)
 
 	if err != nil {
 		fmt.Print("Error en update", err)

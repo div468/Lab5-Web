@@ -6,7 +6,8 @@ Implementación de un servidor HTTP local simulando un tracker de series que sop
 ## Challenges Implementados
 | Challenge | Puntos |
 | :--- | :---: | 
+|Botón para eliminar un episodio visto | 10 |
 | Implementación de una barra de progreso (episodios vistos vs totales) | 15 |
 | Actualización de datos sin reload | 20 |
-|Ordenamiento por columnas|20|
-|Paginación| 40|  
+|Ordenamiento por columnas| 20 |
+|Paginación| 40 |  
