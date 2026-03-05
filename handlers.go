@@ -57,10 +57,10 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 	}
 
 	limit := 5
-	offset:= (page - 1) * limit
+	offset := (page - 1) * limit
 	var totalSeries int
 	db.QueryRow("SELECT COUNT(*) from series").Scan(&totalSeries)
-	totalPages := (totalSeries + limit - 1)/limit
+	totalPages := (totalSeries + limit - 1) / limit
 
 	hasNext := page < totalPages
 	hasPrev := page > 1
@@ -101,7 +101,8 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 	</head>
 	<body>
 	<script>
-	async function addEpisode(id){
+
+async function addEpisode(id){
 	const url = "/update?id=" + id;
 	const response = await fetch(url, {method: "POST"})
 	const newValue = await response.text()
@@ -110,21 +111,55 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 	new_episode.textContent = newValue
 
 	const new_progress = document.getElementById("progress-" + id);
-	new_progress.value= newValue
+	new_progress.value = newValue
 	}
+
+	let sortDirection = {}
+
+	function sortTable(column){
+
+		const table = document.getElementById("seriesTable")
+		const rows = Array.from(table.rows)
+
+		sortDirection[column] = !sortDirection[column]
+
+		const direction = sortDirection[column] ? 1 : -1
+
+		rows.sort((a,b) => {
+
+			let A = a.cells[column].innerText
+			let B = b.cells[column].innerText
+
+			if(!isNaN(A) && !isNaN(B)){
+				return (A - B) * direction
+			}
+
+			return A.localeCompare(B) * direction
+		})
+
+		table.innerHTML = ""
+
+		rows.forEach(row => table.appendChild(row))
+	}
+
 	</script>
 	
 	<table border="3" cellpadding="10" align="center" cellspacing="5">
 	<caption>Mi lista de series</caption>
+	<thead>
 	<tr bgcolor="lightgray">
-	<th>ID de la serie</th>
-	<th>Nombre de la serie</th>
-	<th>Episodio en el que voy</th>
-	<th>Episodios totales</th>
+	<th onClick="sortTable(0)">ID de la serie</th>
+	<th onClick="sortTable(1)">Nombre de la serie</th>
+	<th onClick="sortTable(2)">Episodio en el que voy</th>
+	<th onClick="sortTable(3)">Episodios totales</th>
 	<th>Progreso de la serie</th>
 	<th>Agregar episodio visto</th>
-	</tr>`
+	</tr>
+	</thead>
+	<tbody id="seriesTable">
+	`
 	html += table_data
+	html += `</tbody>`
 
 	nav := ""
 
