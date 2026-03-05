@@ -69,7 +69,7 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 		<td>%s</td>
 		<td id='episode-%d'>%d</td>
 		<td>%d</td>
-		<td><progress id=%d value=%d max=%d></progress></td>
+		<td><progress id="progress-%d" value=%d max=%d></progress></td>
 		<td><button onclick="addEpisode(%d)">+1</button></td>
 		</tr>`,
 			id, name, id, current_episode, total_episodes, id, current_episode, total_episodes, id)
@@ -92,6 +92,9 @@ func handleIndex(conn net.Conn, db *sql.DB) {
 
 	const new_episode = document.getElementById("episode-" + id);
 	new_episode.textContent = newValue
+
+	const new_progress = document.getElementById("progress-" + id);
+	new_progress.value= newValue
 	}
 	</script>
 	
