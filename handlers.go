@@ -89,7 +89,7 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 		<td id='episode-%d'>%d</td>
 		<td>%d</td>
 		<td><progress id="progress-%d" value=%d max=%d></progress></td>
-		<td><button onclick="addEpisode(%d)">+1</button> <button onclick="removeEpisode(%d)">-1</button> </td>
+		<td><button onclick="removeEpisode(%d)">-1</button> <button onclick="addEpisode(%d)">+1</button> </td>
 
 		</tr>`,
 			id, name, id, current_episode, total_episodes, id, current_episode, total_episodes, id, id)
@@ -102,6 +102,54 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 	<head>
 	<meta charset="UTF-8">
 	<title>Tracker de series</title>
+	<style>
+	body{
+		background-color: black;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		align-items: center;
+		
+	}
+	caption{
+		color: #FFFFFF;
+	}
+	table{
+		border: 1px solid white;
+		margin: 20px;
+		border-collapse: collapse;
+		width: auto;
+		height: auto;
+	}
+
+	th {
+		background-color: #C92A1D;
+		color: #FFFFFF;
+		padding: 5px;
+		text-align: center;
+	}
+
+	tr {
+		background-color: #000000;
+		padding: 5px;
+		color: #FFFFFF;
+		text-align: center;
+	}
+	tr:nth-child(even){
+		background-color: #544D4D
+	}
+
+	.navButtons{
+		height: 200px
+		width: 200px
+		background-color: black;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
+
+	</style>
 	</head>
 	<body>
 	<script>
@@ -159,8 +207,8 @@ async function addEpisode(id){
 	}
 	</script>
 	
-	<table border="3" cellpadding="10" align="center" cellspacing="5">
-	<caption>Mi lista de series</caption>
+	<table>
+	<caption><b>Mi lista de series</b></caption>
 	<thead>
 	<tr bgcolor="lightgray">
 	<th onClick="sortTable(0)">ID de la serie</th>
@@ -179,19 +227,26 @@ async function addEpisode(id){
 	nav := ""
 
 	if hasPrev {
-		nav += fmt.Sprintf(`<a href="/?page=%d">Anterior</a>`, prevPage)
+		nav += fmt.Sprintf(`<a href="/?page=%d" class="button-link">
+		<button type="button">Anterior</button>
+		
+		</a>`, prevPage)
 	}
-
-	nav += "&nbsp&nbsp"
 
 	if hasNext {
-		nav += fmt.Sprintf(`<a href="/?page=%d">Siguiente</a>`, nextPage)
+		nav += fmt.Sprintf(`<a href="/?page=%d" class="button-link">
+		<button type="button">Siguiente</button>
+		</a>`, nextPage)
 	}
 
-	html += fmt.Sprintf(`</table>	
-	<a href='./create'>Añadir nueva serie</a>
-	<br><br>
+	html += fmt.Sprintf(`</table>
+
+	<section class=navButtons>
 	%s
+	&nbsp&nbsp
+	<a href='./create' class="button-link">
+		<button type="button">Añadir series</Button>
+	</a>
 	</body></html>`, nav)
 
 	body := html
@@ -218,15 +273,41 @@ func handleAddForm(conn net.Conn) {
 	<head>
 	<title>Añade una serie nueva a tu colección</title>
 	<meta charset="UTF-8">
+	<style>
+	body{
+		background-color: black;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		align-items: center;
+		
+	}
+	h2{
+		color: #FFFFFF;
+	}
+
+	label{
+		color: #FFFFFF;
+		display: block;
+		margin-bottom: 5px;
+	}
+	
+	</style>
 	</head>
 	<body>
-	<h2>Agregar nueva serie   </h2>
+	<h2>Agregar nueva serie </h2>
 	<form method="POST" action="/create_series">
-	Nombre: <input type="text" name="name"><br>
-	Episodio actual: <input type="number" name="current"><br>
-	Episodios totales: <input type="number" name="total"><br>
+	<label for="name">Nombre:</label>
+	<input id="name"type="text" name="name"><br>
+	<label for="current">Episodio en el que voy:</label>
+	<input id="current"type="number" name="current"><br>
+	<label for="total">Episodios totales:</label>
+	<input id="total"type="number" name="total"><br>
 	<input type="submit" value="Agregar">
-	<a href="/">Volver al track de series</a>
+
+	<a href='/' class="button-link">
+		<button type="button">Volver al Tracker</Button>
+	</a>
 	</form>
 	</body>
 	</html>`
