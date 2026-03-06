@@ -115,7 +115,7 @@ func handleIndex(conn net.Conn, db *sql.DB, query url.Values) {
 		color: #FFFFFF;
 	}
 	table{
-		border: 1px solid white;
+		border: 1px solid #544D4D;
 		margin: 20px;
 		border-collapse: collapse;
 		width: auto;
@@ -289,7 +289,13 @@ func handleAddForm(conn net.Conn) {
 	label{
 		color: #FFFFFF;
 		display: block;
-		margin-bottom: 5px;
+		margin-top: 3px;
+	}
+	form{
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		align-items: center;
 	}
 	
 	</style>
@@ -298,17 +304,16 @@ func handleAddForm(conn net.Conn) {
 	<h2>Agregar nueva serie </h2>
 	<form method="POST" action="/create_series">
 	<label for="name">Nombre:</label>
-	<input id="name"type="text" name="name"><br>
+	<input id="name"type="text" name="name">
 	<label for="current">Episodio en el que voy:</label>
-	<input id="current"type="number" name="current"><br>
+	<input id="current"type="number" name="current">
 	<label for="total">Episodios totales:</label>
-	<input id="total"type="number" name="total"><br>
-	<input type="submit" value="Agregar">
-
+	<input id="total"type="number" name="total">
+	<input style="background-color: #C92A1D; margin-top: 10px"type="submit" value="Agregar">
+	</form>
 	<a href='/' class="button-link">
 		<button type="button">Volver al Tracker</Button>
 	</a>
-	</form>
 	</body>
 	</html>`
 
